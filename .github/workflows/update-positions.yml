@@ -1,0 +1,47 @@
+name: Update vessel positions
+ 
+on:
+  schedule:
+    - cron: '17 * * * *'   # every hour at :17 (off-peak minute)
+  workflow_dispatch: {}     # allows manual "Run workflow" button
+ 
+permissions:
+  contents: write
+ 
+concurrency:
+  group: vessel-tracker
+  cancel-in-progress: false
+ 
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+ 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+ 
+      - name: Install dependencies
+        run: pip install websockets
+ 
+      - name: Run tracker
+        env:
+          AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
+          LISTEN_SECONDS: '600'   # listen 10 min per batch of ≤50 vessels
+        run: python tracker.py
+ 
+      - name: Commit updated positions
+        run: |
+          git config user.name  "vessel-tracker-bot"
+          git config user.email "actions@github.com"
+          git add data/latest_positions.csv data/positions.json
+          if git diff --cached --quiet; then
+            echo "No position changes this run."
+          else
+            git commit -m "Update vessel positions [skip ci]"
+            git push
+          fi
