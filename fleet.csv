@@ -1,4 +1,3 @@
-	A	B
-1	mmsi	name
-2	123456789	EXAMPLE VESSEL 1 - replace with real MMSI
-3	987654321	EXAMPLE VESSEL 2 - replace with real MMSI
+	mmsi,name
+256987000,VESSEL ONE
+310123456,VESSEL TWO
